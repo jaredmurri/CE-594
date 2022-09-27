@@ -1,11 +1,10 @@
 import numpy as np
 import scipy
 import math
-import scipy.integrate._quadrature as integrate
 
 ##### Givens  #####
-density= 1153
-kin_viscos= 0.008
+density= 1153 #kg/m^3
+kin_viscos= 0.008 #m/s^2
 L1=1 #m
 L2=4.5 #m
 L3=0.5 #m
