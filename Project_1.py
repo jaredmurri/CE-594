@@ -14,6 +14,9 @@ v1=92 #m/s
 outer_width=0.07620 #m
 inner_width=0.07493 #m
 weight=10000 #N
+E= 10000
+A= outer_width**2-inner_width**2
+
 
 #functions
 def diameter (x):
