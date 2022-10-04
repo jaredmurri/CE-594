@@ -60,7 +60,17 @@ def global_stiff (num_elements):
 
     return stiff_matrix
 
-
+def force_matrix_create (num_elements):
+    nodes=num_elements+1 #determines the number of nodes
+    Length_element=Ltotal/num_elements #length of an element
+    force_matrix=np.zeros((nodes,1)) #creates an empty force matrix
+ 
+    for i in range(0,nodes): #loads the force values into the matrix
+        lower=i*Length_element
+        upper=(i+1)*Length_element
+        force= scipy.integrate.quadrature(Force_distrib(nodes,lower,upper))
+        force_matrix[i,1]= force
+    return force_matrix
 
    
     
