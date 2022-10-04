@@ -45,17 +45,20 @@ def Force_distrib(x):
 
 #####FEA Stuff#####
 
-def global_stiff (theta,num_elements):
+def global_stiff (num_elements):
     nodes=num_elements+1 #determines the number of nodes
     stiff_matrix=np.zeros((nodes,nodes)) #creates an empty glabal matrix
     Length_element=Ltotal/num_elements #length of an element
 
     #fill the matrix with the global stiffness values
-    for i in nodes:
+    for i in range (1,nodes):
         stiff_matrix[i,i]=2*E*A/Length_element
         stiff_matrix[i-1,i]=-E*A/Length_element
         stiff_matrix[i,i-1]=-E*A/Length_element
-    stiff_matrix[nodes,nodes]=0 #this is a boundary condition
+    stiff_matrix[0,0]=E*A/Length_element
+    stiff_matrix[nodes-1,nodes-1]=0 #this is a boundary condition
+
+    return stiff_matrix
 
 
 
