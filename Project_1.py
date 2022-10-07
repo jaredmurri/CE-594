@@ -15,10 +15,9 @@ D1=1 #m
 v1=92 #m/s
 outer_width=0.07620 #m
 inner_width=0.07493 #m
-weight=10000 #N
+self_weight=10000 #N
 E= 69000000000 #Pa
 A= outer_width**2-inner_width**2 #m^2
-
 
 #####functions####
 def diameter (x):
@@ -42,35 +41,42 @@ def Force_distrib(x):
     perimeter=outer_width*4
     return perimeter*.5*drag_coeff(x)*density*(velocity(x)**2) #N/m
 
-
 #####FEA Stuff#####
+ksi_der=1/2
+
+def gaussquad_points(num_points):
+    if num_points == 1:
+        points= np.array([0])
+    elif num_points == 2:
+        points= np.array([1/np.sqrt(3),-1/np.sqrt(3)])
+    elif num_points == 3:
+        points= np.array([0,np.sqrt(3/5),-np.sqrt(3/5)])
+    elif num_points == 4:
+        points= np.array([np.sqrt((2/7)-(2/7)*np.sqrt(6/5)),-np.sqrt((2/7)-(2/7)*np.sqrt(6/5)),np.sqrt((2/7)+(2/7)*np.sqrt(6/5)),-np.sqrt((2/7)+(2/7)*np.sqrt(6/5))])
+    else:
+        points= np.array([0,-(1/3)*np.sqrt(5-2*np.sqrt(10/7)),-(1/3)*np.sqrt(5-2*np.sqrt(10/7)),(1/3)*np.sqrt(5+2*np.sqrt(10/7)),-(1/3)*np.sqrt(5+2*np.sqrt(10/7))])
+    return points
+
+def gauss_weights (num_points):
+    if num_points == 1:
+        weight= np.array([2])
+    elif num_points == 2:
+        weight= np.array([1,1])
+    elif num_points == 3:
+        weight= np.array([0,8/9,8/9])
+    elif num_points == 4:
+        weight= np.array([(18+np.sqrt(30))/36,(18+np.sqrt(30))/36,(18-np.sqrt(30))/36,(18-np.sqrt(30))/36])
+    else:
+        weight= np.array([128/225,(322+13*np.sqrt(70))/900, (322+13*np.sqrt(70))/900, (322-13*np.sqrt(70))/900,(322-13*np.sqrt(70))/900])
+    return weight
 
 def global_stiff (num_elements):
-    nodes=num_elements+1 #determines the number of nodes
+    nodes=num_elements #determines the number of nodes. This one has the same number of nodes as elements becasue the last one is a fixed condition
     stiff_matrix=np.zeros((nodes,nodes)) #creates an empty glabal matrix
     Length_element=Ltotal/num_elements #length of an element
-
-    #fill the matrix with the global stiffness values
-    for i in range (1,nodes):
-        stiff_matrix[i,i]=2*E*A/Length_element
-        stiff_matrix[i-1,i]=-E*A/Length_element
-        stiff_matrix[i,i-1]=-E*A/Length_element
-    stiff_matrix[0,0]=E*A/Length_element
-    stiff_matrix[nodes-1,nodes-1]=0 #this is a boundary condition
-
-    return stiff_matrix
-
-def force_matrix_create (num_elements):
-    nodes=num_elements+1 #determines the number of nodes
-    Length_element=Ltotal/num_elements #length of an element
-    force_matrix=np.zeros((nodes,1)) #creates an empty force matrix
- 
-    for i in range(0,nodes): #loads the force values into the matrix
-        lower=i*Length_element
-        upper=(i+1)*Length_element
-        force= scipy.integrate.quadrature(Force_distrib(nodes,lower,upper))
-        force_matrix[i,1]= force
-    return force_matrix
-
-   
-    
+    num_points = 5
+    local_stiff=np.zeros((2,2))
+    for i in range(1,3):
+        for j in range(1,3):
+            local_stiff[i-1,j-1]
+            
