@@ -42,7 +42,6 @@ def Force_distrib(x):
     return perimeter*.5*drag_coeff(x)*density*(velocity(x)**2) #N/m
 
 #####FEA Stuff#####
-ksi_der=1/2
 
 def gaussquad_points(num_points):
     if num_points == 1:
@@ -70,13 +69,23 @@ def gauss_weights (num_points):
         weight= np.array([128/225,(322+13*np.sqrt(70))/900, (322+13*np.sqrt(70))/900, (322-13*np.sqrt(70))/900,(322-13*np.sqrt(70))/900])
     return weight
 
+        
 def global_stiff (num_elements):
     nodes=num_elements #determines the number of nodes. This one has the same number of nodes as elements becasue the last one is a fixed condition
-    stiff_matrix=np.zeros((nodes,nodes)) #creates an empty glabal matrix
+    stiffness_matrix=np.zeros((nodes,nodes)) #creates an empty glabal matrix
     Length_element=Ltotal/num_elements #length of an element
-    num_points = 5
     local_stiff=np.zeros((2,2))
-    for i in range(1,3):
-        for j in range(1,3):
-            local_stiff[i-1,j-1]
-            
+    ksi_der=1/2
+    num_points=5
+    for m in num_elements: #loops through each element, filling the global matrix
+        for i in range(1,3): #loops through the rows of the local stiffness matrix
+            for j in range(1,3): #loops through the columsn of the local stiffness matrix
+                for k in range(1,num_points+1): #loops through the gaussian points 
+                    gauss_value=gauss_value+(gauss_weights(num_points)[k]*gaussquad_points(num_points)[k]*ksi_der*(-1**(i+1))*ksi_der*(-1**(j+1)))
+                    local_stiff[i,j]=gauss_value #loads the local stiffness matrix with the results from each of the gaussian loops
+        stiffness_matrix[m,m]=stiffness_matrix[m,m]+local_stiff[0,0]
+        stiffness_matrix[m,m+1]=stiffness_matrix[m,m+1]+local_stiff[0,1]
+        stiffness_matrix[m+1,m]=stiffness_matrix[m,m+1]
+        stiffness_matrix[m+1,m+1]=stiffness_matrix[m+1,m+1]+local_stiff[1,1]
+    return stiffness_matrix
+
