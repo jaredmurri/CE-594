@@ -77,15 +77,17 @@ def global_stiff (num_elements):
     local_stiff=np.zeros((2,2))
     ksi_der=1/2
     num_points=5
-    for m in num_elements: #loops through each element, filling the global matrix
+    for m in range(num_elements-1): #loops through each element, filling the global matrix
         for i in range(1,3): #loops through the rows of the local stiffness matrix
             for j in range(1,3): #loops through the columsn of the local stiffness matrix
+                gauss_value=0
                 for k in range(1,num_points+1): #loops through the gaussian points 
-                    gauss_value=gauss_value+(gauss_weights(num_points)[k]*gaussquad_points(num_points)[k]*ksi_der*(-1**(i+1))*ksi_der*(-1**(j+1)))
-                    local_stiff[i,j]=gauss_value #loads the local stiffness matrix with the results from each of the gaussian loops
+                    gauss_value=gauss_value+(gauss_weights(num_points)[k-1]*gaussquad_points(num_points)[k-1]*ksi_der*(-1**(i+1))*ksi_der*(-1**(j+1)))
+                local_stiff[i-1,j-1]=gauss_value #loads the local stiffness matrix with the results from each of the gaussian loops
         stiffness_matrix[m,m]=stiffness_matrix[m,m]+local_stiff[0,0]
         stiffness_matrix[m,m+1]=stiffness_matrix[m,m+1]+local_stiff[0,1]
-        stiffness_matrix[m+1,m]=stiffness_matrix[m,m+1]
+        stiffness_matrix[m+1,m]=stiffness_matrix[m,m+1] #this make the A,-B and -A,B the same value
         stiffness_matrix[m+1,m+1]=stiffness_matrix[m+1,m+1]+local_stiff[1,1]
+    stiffness_matrix[num_elements-1,num_elements-1]=0 #this is a boundary condition
     return stiffness_matrix
 
