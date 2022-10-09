@@ -53,7 +53,7 @@ def gaussquad_points(num_points):
     elif num_points == 4:
         points= np.array([np.sqrt((2/7)-(2/7)*np.sqrt(6/5)),-np.sqrt((2/7)-(2/7)*np.sqrt(6/5)),np.sqrt((2/7)+(2/7)*np.sqrt(6/5)),-np.sqrt((2/7)+(2/7)*np.sqrt(6/5))])
     else:
-        points= np.array([0,-(1/3)*np.sqrt(5-2*np.sqrt(10/7)),-(1/3)*np.sqrt(5-2*np.sqrt(10/7)),(1/3)*np.sqrt(5+2*np.sqrt(10/7)),-(1/3)*np.sqrt(5+2*np.sqrt(10/7))])
+        points= np.array([0,(-1/3)*np.sqrt(5-2*np.sqrt(10/7)),(1/3)*np.sqrt(5-2*np.sqrt(10/7)),(-1/3)*np.sqrt(5+2*np.sqrt(10/7)),(1/3)*np.sqrt(5+2*np.sqrt(10/7))])
     return points
 
 def gauss_weights (num_points):
