@@ -71,23 +71,35 @@ def gauss_weights (num_points):
 
         
 def global_stiff (num_elements):
-    nodes=num_elements #determines the number of nodes. This one has the same number of nodes as elements becasue the last one is a fixed condition
+    nodes=num_elements+1 #determines the number of nodes. 
     stiffness_matrix=np.zeros((nodes,nodes)) #creates an empty glabal matrix
     Length_element=Ltotal/num_elements #length of an element
     local_stiff=np.zeros((2,2))
     ksi_der=1/2
     num_points=5
-    for m in range(num_elements-1): #loops through each element, filling the global matrix
+    gauss_value =0 #initializes variable
+    map=2/Length_element #initializes variable
+    for m in range(nodes-1): #loops through each element, filling the global matrix
         for i in range(1,3): #loops through the rows of the local stiffness matrix
             for j in range(1,3): #loops through the columsn of the local stiffness matrix
-                gauss_value=0
-                for k in range(1,num_points+1): #loops through the gaussian points 
-                    gauss_value=gauss_value+(gauss_weights(num_points)[k-1]*gaussquad_points(num_points)[k-1]*ksi_der*(-1**(i+1))*ksi_der*(-1**(j+1)))
+                for k in range(num_points): #loops through the gaussian points 
+                    gauss_value=gauss_value+(gauss_weights(num_points)[k]*(ksi_der*(-1**(j+1)))*(ksi_der*(-1**(i+1))*(1/map)))
                 local_stiff[i-1,j-1]=gauss_value #loads the local stiffness matrix with the results from each of the gaussian loops
+                gauss_value=0 #reinitializes variable to zero for the next go round
         stiffness_matrix[m,m]=stiffness_matrix[m,m]+local_stiff[0,0]
         stiffness_matrix[m,m+1]=stiffness_matrix[m,m+1]+local_stiff[0,1]
         stiffness_matrix[m+1,m]=stiffness_matrix[m,m+1] #this make the A,-B and -A,B the same value
         stiffness_matrix[m+1,m+1]=stiffness_matrix[m+1,m+1]+local_stiff[1,1]
-    stiffness_matrix[num_elements-1,num_elements-1]=0 #this is a boundary condition
-    return stiffness_matrix
+    stiffness_matrix[nodes-1,nodes-1]=0 #this is a boundary condition
 
+    return stiffness_matrix[0:nodes-1,0:nodes-1]
+
+def global_force(num_elements):
+    nodes=num_elements+1 #determines the number of nodes.
+    Length_element=Ltotal/num_elements #length of an element
+    force_matrix=np.array((1,nodes)) #creates an empty matrix
+    force_matrix[0,0]=self_weight 
+    for i in range(1,nodes):
+        x_pos=i*Length_element
+        force_matrix[1,i]= Length_element*Force_distrib(x_pos)
+    return force_matrix
