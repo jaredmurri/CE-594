@@ -42,6 +42,9 @@ def Force_distrib(x):
     return perimeter*.5*drag_coeff(x)*density*(velocity(x)**2) #N/m
 
 #####FEA Stuff#####
+ksi_der=1/2
+num_points=5
+
 
 def gaussquad_points(num_points):
     if num_points == 1:
@@ -75,16 +78,14 @@ def global_stiff (num_elements):
     stiffness_matrix=np.zeros((nodes,nodes)) #creates an empty glabal matrix
     Length_element=Ltotal/num_elements #length of an element
     local_stiff=np.zeros((2,2))
-    ksi_der=1/2
-    num_points=5
     gauss_value =0 #initializes variable
     map=2/Length_element #initializes variable
     for m in range(nodes-1): #loops through each element, filling the global matrix
-        for i in range(1,3): #loops through the rows of the local stiffness matrix
-            for j in range(1,3): #loops through the columsn of the local stiffness matrix
+        for i in range(0,2): #loops through the rows of the local stiffness matrix
+            for j in range(0,2): #loops through the columsn of the local stiffness matrix
                 for k in range(num_points): #loops through the gaussian points 
                     gauss_value=gauss_value+(gauss_weights(num_points)[k]*(ksi_der*(-1**(j+1)))*(ksi_der*(-1**(i+1))*(1/map)))
-                local_stiff[i-1,j-1]=gauss_value #loads the local stiffness matrix with the results from each of the gaussian loops
+                local_stiff[i,j]=gauss_value #loads the local stiffness matrix with the results from each of the gaussian loops
                 gauss_value=0 #reinitializes variable to zero for the next go round
         stiffness_matrix[m,m]=stiffness_matrix[m,m]+local_stiff[0,0]
         stiffness_matrix[m,m+1]=stiffness_matrix[m,m+1]+local_stiff[0,1]
@@ -97,9 +98,11 @@ def global_stiff (num_elements):
 def global_force(num_elements):
     nodes=num_elements+1 #determines the number of nodes.
     Length_element=Ltotal/num_elements #length of an element
-    force_matrix=np.array((1,nodes)) #creates an empty matrix
-    force_matrix[0,0]=self_weight 
-    for i in range(1,nodes):
+    force_matrix=np.zeros(nodes) #creates an empty matrix
+    force_matrix[0]=self_weight 
+    for i in range(1,nodes-1):
         x_pos=i*Length_element
-        force_matrix[1,i]= Length_element*Force_distrib(x_pos)
-    return force_matrix
+        x_pos1=(i+1)*Length_element
+        force_matrix[i]= ksi_der*Length_element*(Force_distrib(x_pos)+Force_distrib(x_pos1))
+    force_matrix[nodes-1]=-np.sum(force_matrix)
+    return np.transpose(force_matrix[0:nodes-1])
