@@ -43,8 +43,6 @@ def Force_distrib(x):
 
 #####FEA Stuff#####
 ksi_der=1/2
-num_points=5
-
 
 def gaussquad_points(num_points):
     if num_points == 1:
@@ -71,12 +69,12 @@ def gauss_weights (num_points):
     else:
         weight= np.array([128/225,(322+13*np.sqrt(70))/900, (322+13*np.sqrt(70))/900, (322-13*np.sqrt(70))/900,(322-13*np.sqrt(70))/900])
     return weight
-
-        
+     
 def global_stiff (num_elements):
     nodes=num_elements+1 #determines the number of nodes. 
     stiffness_matrix=np.zeros((nodes,nodes)) #creates an empty glabal matrix
     Length_element=Ltotal/num_elements #length of an element
+    num_points=5
     local_stiff=np.zeros((2,2))
     gauss_value =0 #initializes variable
     map=2/Length_element #initializes variable
@@ -84,7 +82,7 @@ def global_stiff (num_elements):
         for i in range(0,2): #loops through the rows of the local stiffness matrix
             for j in range(0,2): #loops through the columsn of the local stiffness matrix
                 for k in range(num_points): #loops through the gaussian points 
-                    gauss_value=gauss_value+(gauss_weights(num_points)[k]*(ksi_der*(-1**(j+1)))*(ksi_der*(-1**(i+1))*(1/map)))
+                    gauss_value=gauss_value+(gauss_weights(num_points)[k]*(ksi_der*((-1)**(j+1)))*(ksi_der*((-1)**(i+1))*(1/map)))
                 local_stiff[i,j]=gauss_value #loads the local stiffness matrix with the results from each of the gaussian loops
                 gauss_value=0 #reinitializes variable to zero for the next go round
         stiffness_matrix[m,m]=stiffness_matrix[m,m]+local_stiff[0,0]
@@ -99,10 +97,24 @@ def global_force(num_elements):
     nodes=num_elements+1 #determines the number of nodes.
     Length_element=Ltotal/num_elements #length of an element
     force_matrix=np.zeros(nodes) #creates an empty matrix
-    force_matrix[0]=self_weight 
-    for i in range(1,nodes-1):
+    for i in range(0,nodes-1):
         x_pos=i*Length_element
         x_pos1=(i+1)*Length_element
         force_matrix[i]= ksi_der*Length_element*(Force_distrib(x_pos)+Force_distrib(x_pos1))
-    force_matrix[nodes-1]=-np.sum(force_matrix)
-    return np.transpose(force_matrix[0:nodes-1])
+    force_matrix[0]=-np.sum(force_matrix)
+    return force_matrix[0:nodes-1]
+
+def displacement_matrix(num_elements):
+    return np.matmul(np.linalg.inv(global_stiff(num_elements)),global_force(num_elements))
+
+def stress_matrix(num_elements):
+    nodes=num_elements+1 #determines the number of nodes.
+    Length_element=Ltotal/num_elements #length of an element
+    stress_matrix=np.zeros(nodes) #creates an empty matrix
+    stress_matrix[nodes-1]=self_weight 
+    for i in range(0,nodes-2):
+        stress_matrix[i]= Length_element*(displacement_matrix(num_elements)[i+1]-displacement_matrix(num_elements)[i])
+    return stress_matrix
+
+def max_stress(num_elements):
+    return np.ndarray.max(stress_matrix(num_elements))/1000
