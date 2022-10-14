@@ -2,6 +2,7 @@
 import numpy as np
 import scipy
 import math
+import matplotlib.pyplot as plt
 
 ##### Givens  #####
 density= 1153 #kg/m^3
@@ -16,7 +17,7 @@ v1=92 #m/s
 outer_width=0.07620 #m
 inner_width=0.07493 #m
 self_weight=10000 #N
-E= 69000000000 #Pa
+E= 69000000000 #Pa=(N/m)
 A= outer_width**2-inner_width**2 #m^2
 
 #####functions####
@@ -26,7 +27,7 @@ def diameter (x):
     elif x>=L3+L2:
         return D1
     else:
-        return D3-((D3-D1)/L2)*(x) #m/s
+        return D3-((D3-D1)/L2)*(x) #m
 
 def velocity(x):
     return (v1*(D1**2))/(diameter(x)**2)
@@ -97,24 +98,50 @@ def global_force(num_elements):
     nodes=num_elements+1 #determines the number of nodes.
     Length_element=Ltotal/num_elements #length of an element
     force_matrix=np.zeros(nodes) #creates an empty matrix
-    for i in range(0,nodes-1):
+    force_matrix[0]=-self_weight
+    for i in range(1,nodes-1):
         x_pos=i*Length_element
         x_pos1=(i+1)*Length_element
-        force_matrix[i]= ksi_der*Length_element*(Force_distrib(x_pos)+Force_distrib(x_pos1))
-    force_matrix[0]=-np.sum(force_matrix)
+        force_matrix[i]= ((-1)*ksi_der*Length_element*(1/2)*(Force_distrib(x_pos)+Force_distrib(x_pos1)))+force_matrix[1-1]
+    force_matrix[nodes-1]=-np.sum(force_matrix)
     return force_matrix[0:nodes-1]
 
 def displacement_matrix(num_elements):
     return np.matmul(np.linalg.inv(global_stiff(num_elements)),global_force(num_elements))
 
 def stress_matrix(num_elements):
-    nodes=num_elements+1 #determines the number of nodes.
     Length_element=Ltotal/num_elements #length of an element
-    stress_matrix=np.zeros(nodes) #creates an empty matrix
-    stress_matrix[nodes-1]=self_weight 
-    for i in range(0,nodes-2):
-        stress_matrix[i]= Length_element*(displacement_matrix(num_elements)[i+1]-displacement_matrix(num_elements)[i])
+    stress_matrix=np.zeros(num_elements) #creates an empty matrix
+    displacement=displacement_matrix(num_elements) #brings in the displacements
+    for i in range(0,num_elements-1):
+        stress_matrix[i]= ((displacement[i+1]-displacement[i])/Length_element)/A #this is the derivative of the displacement per cross sectional area
     return stress_matrix
 
+def strain_matrix(num_elements):
+    strain_matrix=np.zeros(num_elements) #creates an empty matrix
+    stress=stress_matrix(num_elements) #brings in the strain matrix
+    for i in range(0,num_elements-1):
+        strain_matrix[i]= stress[i]/E
+    return strain_matrix
+
 def max_stress(num_elements):
-    return np.ndarray.max(stress_matrix(num_elements))/1000
+    return np.ndarray.max(stress_matrix(num_elements))
+
+#####Plotting#####
+def plot_stress(num_elements):
+    x=np.linspace(0,Ltotal,num_elements)
+    y= stress_matrix(num_elements)
+    plt.plot(x,y, color="black")
+    plt.show()
+
+def plot_strain(num_elements):
+    x=np.linspace(0,Ltotal,num_elements)
+    y= strain_matrix(num_elements)
+    plt.plot(x,y, color="black")
+    plt.show()
+
+def plot_displacement(num_elements):
+    x=np.linspace(0,Ltotal,num_elements)
+    y= displacement_matrix(num_elements)
+    plt.plot(x,y, color="black")
+    plt.show()
